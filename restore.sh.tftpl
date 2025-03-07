@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Fail on error
+set -e
+
+PVC_NAME=${pvc_name}
+SNAPSHOT_ID=${snapshot_id}
+RESTIC_REPO="rclone:gdrive:${drive_path}/$PVC_NAME"
+BACKUP_PATH=${pvc_volume_mount}
+BACKUP_HOST="backup-$PVC_NAME-pvc"
+RCLONE_ARGS="serve restic --stdio --tpslimit=10 --drive-chunk-size=256M --drive-use-trash=false --fast-list"
+
+%{if password_defined }
+RESTIC_PASSWORD_FLAG=""
+%{ else }
+RESTIC_PASSWORD_FLAG="--insecure-no-password"
+%{ endif ~}
+
+# Restore backup
+restore_backup() {
+    echo "---Restoring backup from $SNAPSHOT_ID---"
+    restic -r $RESTIC_REPO restore $SNAPSHOT_ID --target $BACKUP_PATH --host $BACKUP_HOST $RESTIC_PASSWORD_FLAG -o rclone.args="$RCLONE_ARGS"
+     
+}
+
+# Main execution
+main() {
+    restore_backup
+}
+
+# Run main function
+main

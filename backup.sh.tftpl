@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# Fail on error
+set -e
+
+PVC_NAME=${pvc_name}
+RESTIC_REPO="rclone:gdrive:${drive_path}/$PVC_NAME"
+BACKUP_PATH=${pvc_volume_mount}
+BACKUP_HOST="backup-$PVC_NAME-pvc"
+KEEP_LAST=${keep_last}
+RCLONE_ARGS="serve restic --stdio --tpslimit=10 --drive-chunk-size=256M --drive-use-trash=false --fast-list"
+
+%{if password_defined }
+RESTIC_PASSWORD_FLAG=""
+%{ else }
+RESTIC_PASSWORD_FLAG="--insecure-no-password"
+%{ endif ~}
+
+EXCLUDE_DIRS=""
+%{for dir in exclude_dirs}
+EXCLUDE_DIRS="--exclude=$BACKUP_PATH${dir}"
+%{ endfor ~}
+
+# Initialize repository if it doesn't exist
+init_repository() {
+    echo "---Checking repository---"
+    if ! restic -r $RESTIC_REPO snapshots &>/dev/null; then
+        echo "---Repository doesn't exist. Initializing---"
+        restic -r $RESTIC_REPO init $RESTIC_PASSWORD_FLAG
+    fi
+}
+
+# Create backup
+create_backup() {
+    echo "---Starting backup for $PVC_NAME---"
+    restic -r $RESTIC_REPO -v backup $BACKUP_PATH --host $BACKUP_HOST $EXCLUDE_DIRS $RESTIC_PASSWORD_FLAG -o rclone.args="$RCLONE_ARGS"
+}
+
+# Cleanup old backups
+cleanup_old_backups() {
+    echo "---Keeping last $KEEP_LAST backups---"
+    restic -r $RESTIC_REPO forget --keep-last $KEEP_LAST --prune $RESTIC_PASSWORD_FLAG
+}
+
+# Main execution
+main() {
+    init_repository
+    create_backup
+    cleanup_old_backups
+}
+
+# Run main function
+main
