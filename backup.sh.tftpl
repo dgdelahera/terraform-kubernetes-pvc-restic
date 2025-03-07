@@ -6,7 +6,7 @@ set -e
 PVC_NAME=${pvc_name}
 RESTIC_REPO="rclone:gdrive:${drive_path}/$PVC_NAME"
 BACKUP_PATH=${pvc_volume_mount}
-BACKUP_HOST="backup-$PVC_NAME-pvc"
+BACKUP_HOST="backup-pvc-$PVC_NAME"
 KEEP_LAST=${keep_last}
 RCLONE_ARGS="serve restic --stdio --tpslimit=10 --drive-chunk-size=256M --drive-use-trash=false --fast-list"
 
