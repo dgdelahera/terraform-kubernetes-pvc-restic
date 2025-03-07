@@ -6,7 +6,7 @@ locals {
   backup_script      = "backup.sh"
   backup_script_path = "/etc/backup"
   backup_labels = {
-    "app.kubernetes.io/name"      = "backup-${var.pvc.name}"
+    "app.kubernetes.io/name"      = "backup-pvc-${var.pvc.name}"
     "app.kubernetes.io/component" = "backup"
     "app.kubernetes.io/part-of"   = var.pvc.name
   }
@@ -16,7 +16,7 @@ locals {
   restore_snapshot_id = var.restore.snapshot_id != null ? var.restore.snapshot_id : "latest"
   restore_enabled     = var.restore.enabled
   restore_labels = {
-    "app.kubernetes.io/name"      = "restore-${var.pvc.name}"
+    "app.kubernetes.io/name"      = "restore-pvc-${var.pvc.name}"
     "app.kubernetes.io/component" = "backup"
     "app.kubernetes.io/part-of"   = var.pvc.name
   }
@@ -79,7 +79,7 @@ resource "kubernetes_config_map_v1" "backup_script" {
 
 resource "kubernetes_cron_job_v1" "pvc_backup" {
   metadata {
-    name      = "backup-${var.pvc.name}-pvc"
+    name      = "backup-pvc-${var.pvc.name}"
     namespace = var.pvc.namespace
     labels    = local.backup_labels
   }
@@ -89,14 +89,14 @@ resource "kubernetes_cron_job_v1" "pvc_backup" {
     successful_jobs_history_limit = 1
     job_template {
       metadata {
-        name   = "backup-${var.pvc.name}-pvc"
+        name   = "backup-pvc-${var.pvc.name}"
         labels = local.backup_labels
       }
       spec {
         backoff_limit = var.backup.retries
         template {
           metadata {
-            name = "backup-${var.pvc.name}-pvc"
+            name = "backup-pvc-${var.pvc.name}"
           }
           spec {
             node_selector = var.pvc.node != null ? {
@@ -170,7 +170,7 @@ resource "kubernetes_config_map_v1" "restore_script" {
   count = var.restore.enabled ? 1 : 0
 
   metadata {
-    name      = "restore-${var.pvc.name}-pvc"
+    name      = "restore-pvc-${var.pvc.name}"
     namespace = var.pvc.namespace
   }
   data = {
@@ -194,7 +194,7 @@ resource "kubernetes_job_v1" "pvc_restore_backup" {
   count = local.restore_enabled ? 1 : 0
 
   metadata {
-    name      = "restore-${var.pvc.name}-pvc"
+    name      = "restore-pvc-${var.pvc.name}"
     namespace = var.pvc.namespace
     labels    = local.restore_labels
     annotations = {
@@ -206,7 +206,7 @@ resource "kubernetes_job_v1" "pvc_restore_backup" {
   spec {
     template {
       metadata {
-        name   = "restore-${var.pvc.name}-pvc"
+        name   = "restore-pvc-${var.pvc.name}"
         labels = local.restore_labels
       }
       spec {

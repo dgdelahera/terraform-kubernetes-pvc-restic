@@ -4,7 +4,7 @@ locals {
 
 module "pvc" {
   source  = "dgdelahera/pvc-restic/kubernetes"
-  version = "1.0.0"
+  version = "1.2.0"
 
   pvc = {
     name = local.pvc_name

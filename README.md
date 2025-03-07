@@ -64,6 +64,17 @@ Instead, store the `pvc_name` in a local and use it in both places. (See the exa
 To avoid hitting the rate limit of Google Drive, it is recommended to schedule the backups in different
 hours if you are creating multiple backups.
 
+## How to get the snapshot ID
+
+To get the snapshot ID, you can use the `restic snapshots` command. This will list all the snapshots available
+and the date of the snapshot.
+
+```bash
+restic -r rclone:gdrive:/my/path/backup snapshots
+```
+
+Additionally, you can check the backup cronjob logs to see the snapshot available.
+
 ## Examples
 
 On the following example we are deploying a PVC and a cronjob to backup the PVC to Google Drive.
@@ -77,7 +88,7 @@ locals {
 
 module "pvc" {
   source  = "dgdelahera/pvc-restic/kubernetes"
-  version = "1.0.0"
+  version = "1.2.0"
 
   pvc = {
     name = local.pvc_name
@@ -126,7 +137,7 @@ On the following example we are restoring the PVC from a Google Drive backup.
 ```hcl
 module "pvc" {
   source  = "dgdelahera/pvc-restic/kubernetes"
-  version = "1.0.0"
+  version = "1.2.0"
 
   pvc = {
     name = "example-restore"
