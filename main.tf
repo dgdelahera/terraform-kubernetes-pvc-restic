@@ -62,7 +62,7 @@ resource "kubernetes_secret_v1" "backup_config" {
 
 resource "kubernetes_config_map_v1" "backup_script" {
   metadata {
-    name      = "backup-script"
+    name      = "backup-pvc-${var.pvc.name}"
     namespace = var.pvc.namespace
   }
   data = {
