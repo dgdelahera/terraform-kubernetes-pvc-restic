@@ -1,6 +1,6 @@
 module "pvc" {
   source  = "dgdelahera/pvc-restic/kubernetes"
-  version = "1.3.0"
+  version = "1.4.0"
 
   pvc = {
     name = "example-restore"

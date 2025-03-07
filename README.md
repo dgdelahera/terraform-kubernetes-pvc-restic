@@ -88,7 +88,7 @@ locals {
 
 module "pvc" {
   source  = "dgdelahera/pvc-restic/kubernetes"
-  version = "1.2.0"
+  version = "1.4.0"
 
   pvc = {
     name = local.pvc_name
@@ -137,7 +137,7 @@ On the following example we are restoring the PVC from a Google Drive backup.
 ```hcl
 module "pvc" {
   source  = "dgdelahera/pvc-restic/kubernetes"
-  version = "1.2.0"
+  version = "1.4.0"
 
   pvc = {
     name = "example-restore"
