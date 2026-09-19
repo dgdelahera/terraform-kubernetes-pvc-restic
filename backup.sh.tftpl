@@ -3,6 +3,11 @@
 # Fail on error
 set -e
 
+# rclone refreshes the Google Drive token on every run and must write it back, but the
+# mounted config is a read-only Secret. Copy it somewhere writable before using it.
+export RCLONE_CONFIG=/tmp/rclone.conf
+cp /root/.config/rclone/rclone.conf "$RCLONE_CONFIG"
+
 PVC_NAME=${pvc_name}
 RESTIC_REPO="rclone:gdrive:${drive_path}/$PVC_NAME"
 BACKUP_PATH=${pvc_volume_mount}
@@ -24,10 +29,12 @@ EXCLUDE_DIRS="--exclude=$BACKUP_PATH${dir}"
 # Initialize repository if it doesn't exist
 init_repository() {
     echo "---Checking repository---"
-    if ! restic -r $RESTIC_REPO snapshots &>/dev/null; then
-        echo "---Repository doesn't exist. Initializing---"
-        restic -r $RESTIC_REPO init $RESTIC_PASSWORD_FLAG
+    if restic -r $RESTIC_REPO cat config $RESTIC_PASSWORD_FLAG -o rclone.args="$RCLONE_ARGS" >/dev/null 2>&1; then
+        echo "---Repository exists---"
+        return 0
     fi
+    echo "---Repository doesn't exist. Initializing---"
+    restic -r $RESTIC_REPO init $RESTIC_PASSWORD_FLAG -o rclone.args="$RCLONE_ARGS"
 }
 
 # Create backup

@@ -3,6 +3,11 @@
 # Fail on error
 set -e
 
+# rclone refreshes the Google Drive token on every run and must write it back, but the
+# mounted config is a read-only Secret. Copy it somewhere writable before using it.
+export RCLONE_CONFIG=/tmp/rclone.conf
+cp /root/.config/rclone/rclone.conf "$RCLONE_CONFIG"
+
 PVC_NAME=${pvc_name}
 SNAPSHOT_ID=${snapshot_id}
 RESTIC_REPO="rclone:gdrive:${drive_path}/$PVC_NAME"
