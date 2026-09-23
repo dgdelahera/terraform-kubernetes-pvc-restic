@@ -118,6 +118,10 @@ resource "kubernetes_cron_job_v1" "pvc_backup" {
                   }
                 }
               }
+              resources {
+                requests = var.backup.resources.requests
+                limits   = var.backup.resources.limits
+              }
               volume_mount {
                 mount_path = local.pvc_volume_mount
                 name       = "${var.pvc.name}-data"
@@ -232,6 +236,10 @@ resource "kubernetes_job_v1" "pvc_restore_backup" {
               }
             }
           }
+          resources {
+            requests = var.restore.resources.requests
+            limits   = var.restore.resources.limits
+          }
           volume_mount {
             mount_path = local.pvc_volume_mount
             name       = "${var.pvc.name}-data"
@@ -283,3 +291,4 @@ resource "kubernetes_job_v1" "pvc_restore_backup" {
     ]
   }
 }
+
