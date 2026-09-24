@@ -44,6 +44,10 @@ variable "backup" {
     restic_password = optional(string)
     exclude_dirs    = optional(list(string), [])
     keep_last       = optional(number, 4)
+    resources = optional(object({
+      requests = optional(map(string), { memory = "256Mi", cpu = "50m" })
+      limits   = optional(map(string), { memory = "1Gi" })
+    }), {})
     remote = object({
       gdrive = optional(object({
         path  = optional(string, "/")
@@ -58,6 +62,9 @@ variable "backup" {
   - restic_password: (Optional) Restic password used to encrypt the backups. If not provided, the `--insecure-no-password` flag will be used.
   - exclude_dirs: (Optional) List of directories to exclude from the backup. It supports patterns like "config/transcodes"
   - keep_last: (Optional) Number of backups to keep. Defaults to 4
+  - resources: (Optional) Compute resources for the backup container. Defaults to 256Mi/50m requested and a 1Gi
+    memory limit. The limit matters: without one, restic plus rclone's upload buffers are charged to the node, so a
+    large volume can trigger a node-level OOM that kills an unrelated workload instead of the backup.
   - remote: (Optional) Object that contains the remote storage configuration. You must provide at least one of the following:
     - gdrive: (Optional) Object that contains the Google Drive configuration. It supports the following attributes:
       - path: (Optional) Path in Google Drive where the backups will be stored. Defaults to `/`
@@ -75,12 +82,17 @@ variable "restore" {
   type = object({
     enabled     = optional(bool, false)
     snapshot_id = optional(string)
+    resources = optional(object({
+      requests = optional(map(string), { memory = "256Mi", cpu = "50m" })
+      limits   = optional(map(string), { memory = "1Gi" })
+    }), {})
   })
   description = <<-EOF
   (Optional) Object that contains the restore configuration. It supports the following attributes:
   - enabled: (Optional) If enabled, the backup will be restored from the snapshot. It only runs once. Defaults to false
   - snapshot_id: (Optional) ID of the snapshot to restore. If not provided, the latest snapshot will be used. Changing this
   value will force the recreation of the restore job.
+  - resources: (Optional) Compute resources for the restore container. Same defaults and rationale as `backup.resources`.
   EOF
 
   default = {}
