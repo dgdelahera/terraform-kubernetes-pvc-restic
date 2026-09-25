@@ -87,6 +87,13 @@ resource "kubernetes_cron_job_v1" "pvc_backup" {
   spec {
     schedule                      = var.backup.schedule
     successful_jobs_history_limit = 1
+
+    # A hung backup must not be joined by tomorrow's. The Kubernetes default is
+    # "Allow", which starts every scheduled run regardless of whether the last
+    # one is still going -- so a job stuck on the remote quietly accumulates a
+    # copy of itself per day, each holding the same PVC.
+    concurrency_policy = "Forbid"
+
     job_template {
       metadata {
         name   = "backup-pvc-${var.pvc.name}"
@@ -94,6 +101,23 @@ resource "kubernetes_cron_job_v1" "pvc_backup" {
       }
       spec {
         backoff_limit = var.backup.retries
+
+        # Without this a job that stops making progress runs forever. These
+        # backups do not fail, they hang: restic talks to the remote over
+        # rclone's HTTP interface, and when that stops answering the client
+        # blocks rather than erroring.
+        #
+        # Measured on one homelab cluster, 2026-09-25: 14 of 24 backup jobs had
+        # failed, and the failures had been *running* for 4d3h (nine of them),
+        # 4d2h, 35h, 11d and 25d. With `concurrency_policy` defaulting to
+        # "Allow" they stacked up, and with `backoff_limit` defaulting to 0 none
+        # of them was ever retried.
+        #
+        # Six hours is generous for a real backup -- initialising a repository
+        # and uploading a large PVC is slow -- while still turning a silent
+        # multi-day hang into a visible failure the same morning.
+        active_deadline_seconds = var.backup.timeout
+
         template {
           metadata {
             name = "backup-pvc-${var.pvc.name}"

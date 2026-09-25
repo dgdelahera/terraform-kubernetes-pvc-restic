@@ -31,6 +31,10 @@ Currently there is only one remote storage supported. Feel free to open PR's to 
 - `backup`:   Object that contains the configuration for the backup. It supports the following attributes:
   - `schedule`: Restic schedule for the backups
   - `retries`: (Optional) Number of retries for the backup job. Defaults to 0
+  - `timeout`: (Optional) Seconds before a running backup is killed, set as `activeDeadlineSeconds`. Defaults to `21600`
+    (6 hours). These jobs hang rather than fail when the remote stops answering, so without a deadline a stuck backup
+    runs for days. The CronJob also uses `concurrencyPolicy: Forbid`, so a stuck run blocks the next one instead of
+    stacking with it.
   - `restic_password`: (Optional) Restic password used to encrypt the backups. If not provided, the `--insecure-no-password` flag will be used.
   - `exclude_dirs`: (Optional) List of directories to exclude from the backup. It supports patterns like "config/transcodes"
   - `keep_last`: (Optional) Number of backups to keep. Defaults to 4
