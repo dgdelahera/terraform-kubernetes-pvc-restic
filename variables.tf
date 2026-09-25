@@ -41,6 +41,7 @@ variable "backup" {
   type = object({
     schedule        = string
     retries         = optional(number, 0)
+    timeout         = optional(number, 21600)
     restic_password = optional(string)
     exclude_dirs    = optional(list(string), [])
     keep_last       = optional(number, 4)
@@ -59,6 +60,10 @@ variable "backup" {
   Object that contains the configuration for the backup. It supports the following attributes:
   - schedule: Restic schedule for the backups
   - retries: (Optional) Number of retries for the backup job. Defaults to 0
+  - timeout: (Optional) Seconds before a running backup is killed, as `activeDeadlineSeconds`. Defaults to 21600 (6 hours).
+    These jobs hang rather than fail when the remote stops answering, so without a deadline a stuck backup runs for days --
+    measured at 4d3h, 11d and 25d on a real cluster. The CronJob also uses `concurrencyPolicy: Forbid`, so a stuck run
+    blocks the next one instead of stacking with it.
   - restic_password: (Optional) Restic password used to encrypt the backups. If not provided, the `--insecure-no-password` flag will be used.
   - exclude_dirs: (Optional) List of directories to exclude from the backup. It supports patterns like "config/transcodes"
   - keep_last: (Optional) Number of backups to keep. Defaults to 4
