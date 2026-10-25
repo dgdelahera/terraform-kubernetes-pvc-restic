@@ -32,9 +32,15 @@ EXCLUDE_DIRS="--exclude=$BACKUP_PATH${dir}"
 # Initialize repository if it doesn't exist
 init_repository() {
     echo "---Checking repository---"
-    if restic -r $RESTIC_REPO cat config $RESTIC_PASSWORD_FLAG -o rclone.args="$RCLONE_ARGS" >/dev/null 2>&1; then
+    rc=0
+    restic -r $RESTIC_REPO cat config $RESTIC_PASSWORD_FLAG -o rclone.args="$RCLONE_ARGS" >/dev/null || rc=$?
+    if [ "$rc" -eq 0 ]; then
         echo "---Repository exists---"
         return 0
+    fi
+    if [ "$rc" -ne 10 ]; then
+        echo "---Could not read repository (restic exit code $rc)---"
+        exit "$rc"
     fi
     echo "---Repository doesn't exist. Initializing---"
     restic -r $RESTIC_REPO init $RESTIC_PASSWORD_FLAG -o rclone.args="$RCLONE_ARGS"
