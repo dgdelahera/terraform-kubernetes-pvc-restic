@@ -55,7 +55,7 @@ create_backup() {
 # Cleanup old backups
 cleanup_old_backups() {
     echo "---Keeping last $KEEP_LAST backups---"
-    restic -r $RESTIC_REPO forget --keep-last $KEEP_LAST --prune $RESTIC_PASSWORD_FLAG
+    restic -r $RESTIC_REPO forget --keep-last $KEEP_LAST --prune $RESTIC_PASSWORD_FLAG -o rclone.args="$RCLONE_ARGS"
 }
 
 # Main execution
